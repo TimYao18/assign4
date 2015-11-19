@@ -5,8 +5,9 @@ final int GAME_START = 0;
 final int GAME_RUN = 1;
 final int GAME_LOSE = 2;
 
-final int SOURCE_FIGHTER = 0;
-final int SOURCE_BULLET = 1;
+final int SOURCE_NONE = 0;
+final int SOURCE_FIGHTER = 1;
+final int SOURCE_BULLET = 2;
 
 final int HIT_NONE = 0;
 final int HIT_ENEMY = 1;
@@ -36,11 +37,14 @@ final int ENEMY_GAP = (ENEMY_SIZE / 2);
 final int TREASURE_SIZE = 40;
 final int HP_WIDTH = 202;
 final int HP_HEIGHT = 20;
+final int BULLET_WIDTH = 32;
+final int BULLET_HEIGHT = 27;
 
 // speed
 final int BACKGROUND_SPEED = 2;
 final int ENEMY_SPEED = 5;
 final int FIGHTER_SPEED = 5;
+final int BULLET_SPEED = 5;
 
 // level_enemy_num
 final int ENEMY_NUM_1 = 5;
@@ -51,12 +55,17 @@ final int MAX_ENEMY_NUM = 8;
 final int BOOM_IMAGE_NONE = -1;
 final int MAX_BOOM_IMAGE_NUM = 5;
 
+final int MAX_BULLET_NUM = 5;
+
 int[] arrayEnemyX = new int[MAX_ENEMY_NUM];
 int[] arrayEnemyY = new int[MAX_ENEMY_NUM];
 boolean[] arrayEnemyEnable = new boolean[MAX_ENEMY_NUM];
 int[] arrayBoomX = new int[MAX_ENEMY_NUM];
 int[] arrayBoomY = new int[MAX_ENEMY_NUM];
 int[] arrayBoomShow = new int[MAX_ENEMY_NUM];
+int[] arrayBulletX = new int[MAX_BULLET_NUM];
+int[] arrayBulletY = new int[MAX_BULLET_NUM];
+boolean[] arrayBulletEnable = new boolean[MAX_BULLET_NUM];
 
 // variables
 int gameState;
@@ -89,6 +98,7 @@ PImage hp;
 PImage treasure;
 PImage gameLose1;
 PImage gameLose2;
+PImage bullet;
 PImage[] boom = new PImage[5];
 
 
@@ -116,6 +126,7 @@ void setup () {
   for (int i = 0; i < MAX_ENEMY_NUM; i++) {
     arrayBoomShow[i] = BOOM_IMAGE_NONE; // not show
   }
+  bullet = loadImage("img/shoot.png");
 
   // default
   gameState = GAME_START;
@@ -297,16 +308,30 @@ void draw() {
         arrayEnemyX[enemyNo]+=ENEMY_SPEED;
       }
     }
+    
+    // draw bullet
+    for (int i = 0; i < MAX_BULLET_NUM; i++) {
+      if (arrayBulletEnable[i] == false) {
+        continue;
+      }
+      image(bullet, arrayBulletX[i], arrayBulletY[i]);
+      arrayBulletX[i]-=BULLET_SPEED;
+
+      // out of screen, disable bullet 
+      if (arrayBulletX[i] < -BULLET_WIDTH)
+        arrayBulletEnable[i] = false;
+    }
 
     // ENABLE_COLLISION
     // Enemy hit Detection
-    int detectSource = SOURCE_FIGHTER;
+    int detectSource = SOURCE_NONE;
     int detectHit = HIT_NONE;
     for (int enemyNo = 0; enemyNo < MAX_ENEMY_NUM; enemyNo++) {
       if (arrayEnemyEnable[enemyNo] == false) {
         continue;
       }
 
+      // fighter hit detect
       if (arrayEnemyX[enemyNo] <= fighterX && fighterX <= arrayEnemyX[enemyNo] + ENEMY_SIZE &&
          arrayEnemyY[enemyNo] <= fighterY && fighterY <= arrayEnemyY[enemyNo] + ENEMY_SIZE) {
          // Fighter Left-Up corner is in enemy's rect
@@ -327,6 +352,44 @@ void draw() {
          // Fighter Right-Down corner is in enemy's rect
          detectSource = SOURCE_FIGHTER;
          detectHit = HIT_ENEMY;
+      } 
+
+      // not hit fighter, then check bullet
+      if (detectHit == HIT_NONE)
+      {
+        // bullet hit detect
+        for (int j = 0; j < MAX_BULLET_NUM; j++) {
+          if (arrayBulletEnable[j] == false)
+            continue;
+  
+          if (arrayEnemyX[enemyNo] <= arrayBulletX[j] && arrayBulletX[j] <= arrayEnemyX[enemyNo] + ENEMY_SIZE &&
+             arrayEnemyY[enemyNo] <= arrayBulletY[j] && arrayBulletY[j] <= arrayEnemyY[enemyNo] + ENEMY_SIZE) {
+             // Bullet Left-Up corner is in enemy's rect
+             detectSource = SOURCE_BULLET;
+             detectHit = HIT_ENEMY;
+          } else if (arrayEnemyX[enemyNo] <= arrayBulletX[j]+FIGHTER_SIZE && arrayBulletX[j]+FIGHTER_SIZE <= arrayEnemyX[enemyNo] + ENEMY_SIZE &&
+             arrayEnemyY[enemyNo] <= arrayBulletY[j] && arrayBulletY[j] <= arrayEnemyY[enemyNo] + ENEMY_SIZE) {
+             // Bullet Right-Up corner is in enemy's rect
+             detectSource = SOURCE_BULLET;
+             detectHit = HIT_ENEMY;
+          } else if (arrayEnemyX[enemyNo] <= arrayBulletX[j] && arrayBulletX[j] <= arrayEnemyX[enemyNo] + ENEMY_SIZE &&
+             arrayEnemyY[enemyNo] <= arrayBulletY[j]+FIGHTER_SIZE && arrayBulletY[j]+FIGHTER_SIZE <= arrayEnemyY[enemyNo] + ENEMY_SIZE) {
+             // Bullet Left-Down corner is in enemy's rect
+             detectSource = SOURCE_BULLET;
+             detectHit = HIT_ENEMY;
+          } else if (arrayEnemyX[enemyNo] <= arrayBulletX[j]+FIGHTER_SIZE && arrayBulletX[j]+FIGHTER_SIZE <= arrayEnemyX[enemyNo] + ENEMY_SIZE &&
+             arrayEnemyY[enemyNo] <= arrayBulletY[j]+FIGHTER_SIZE && arrayBulletY[j]+FIGHTER_SIZE <= arrayEnemyY[enemyNo] + ENEMY_SIZE) {
+             // Bullet Right-Down corner is in enemy's rect
+             detectSource = SOURCE_BULLET;
+             detectHit = HIT_ENEMY;
+          }
+          
+          if (detectHit == HIT_ENEMY)
+          {
+            arrayBulletEnable[j] = false;
+            break;
+          }
+        }
       }
       
       // hit enemy => disable enemy
@@ -462,6 +525,16 @@ void keyPressed() {
     case RIGHT:
       isRightPressed = true;
       break;
+    }
+  } else if (key == ' ') {
+    // space to shoot bullet
+    for (int i = 0; i < MAX_BULLET_NUM; i++) {
+      if (arrayBulletEnable[i] == false) {
+        arrayBulletEnable[i] = true;
+        arrayBulletX[i] = fighterX;
+        arrayBulletY[i] = fighterY;
+        break;
+      }
     }
   }
 }
