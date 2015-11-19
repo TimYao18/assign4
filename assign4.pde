@@ -183,14 +183,13 @@ void draw() {
     
     // draw boom
     //// 1frame = 100ms = 0.1s 
-    if (frameCount % (60/6) == 0) {
-      for (int i = 0; i < MAX_ENEMY_NUM; i++) {
-        if (arrayBoomShow[i] != BOOM_IMAGE_NONE) {
-          image(boom[arrayBoomShow[i]], arrayBoomX[i], arrayBoomY[i]);
-          arrayBoomShow[i]++;
-          if (arrayBoomShow[i] >= MAX_BOOM_IMAGE_NUM)
-            arrayBoomShow[i] = BOOM_IMAGE_NONE;
-        }
+    int switchNextFlame = (frameCount % (60/6) == 0) ? 1 : 0; 
+    for (int i = 0; i < MAX_ENEMY_NUM; i++) {
+      if (arrayBoomShow[i] != BOOM_IMAGE_NONE) {
+        image(boom[arrayBoomShow[i]], arrayBoomX[i], arrayBoomY[i]);
+        arrayBoomShow[i]+=switchNextFlame;
+        if (arrayBoomShow[i] >= MAX_BOOM_IMAGE_NUM)
+          arrayBoomShow[i] = BOOM_IMAGE_NONE;
       }
     }
 
@@ -231,18 +230,18 @@ void draw() {
         if (random(-1, 1) >= 0) {
           // slant /
           slantDirection = 1;
-          startY = floor(random(height-ENEMY_SIZE*3));
+          startY = floor(random(height-ENEMY_SIZE*5));
         } else {
           // slant \
           slantDirection = -1;
-          startY = floor(random(ENEMY_SIZE*2, height-ENEMY_SIZE));
+          startY = floor(random(ENEMY_SIZE*4, height-ENEMY_SIZE));
         }
 
         // set start position
         for (int enemyNo = 0; enemyNo < MAX_ENEMY_NUM; enemyNo++) {
           if (enemyNo < ENEMY_NUM_2) {
             arrayEnemyX[enemyNo] = 0 - enemyNo * (ENEMY_SIZE + ENEMY_GAP);
-            arrayEnemyY[enemyNo] = startY + slantDirection * enemyNo * ENEMY_GAP;
+            arrayEnemyY[enemyNo] = startY + slantDirection * enemyNo * ENEMY_SIZE;
             arrayEnemyEnable[enemyNo] = true;
           } else {
             arrayEnemyEnable[enemyNo] = false;
