@@ -532,7 +532,7 @@ void keyPressed() {
       if (arrayBulletEnable[i] == false) {
         arrayBulletEnable[i] = true;
         arrayBulletX[i] = fighterX;
-        arrayBulletY[i] = fighterY;
+        arrayBulletY[i] = fighterY + (FIGHTER_SIZE / 2) - (BULLET_HEIGHT/2);
         break;
       }
     }
