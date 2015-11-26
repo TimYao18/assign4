@@ -497,8 +497,14 @@ void draw() {
         
         enemyTeamType = -1;
         changeEnemyTeamType = true;
+        // Clear Boom
         for (int i = 0; i < MAX_ENEMY_NUM; i++) {
           arrayBoomShow[i] = BOOM_IMAGE_NONE;
+        }
+
+        // Clear Bullets
+        for (int i = 0; i < MAX_BULLET_NUM; i++){
+          arrayBulletEnable[i] = false;
         }
       }
     } else {
